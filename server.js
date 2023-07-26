@@ -6,26 +6,20 @@ const app = express();
 npm install body-parser
 npm install express
 
-
 */
 
 /*---------------get--------------- */
-app.post('/', (req, res) => {
-    try {
-        console.log("Funciona");
-        res.send('hello world');
-    } catch(e) {
-        console.log("Error: ", e);
-    }
-})
+// app.post('/', (req, res) => {
+//     try {
+//         console.log("Funciona");
+//         res.send('hello world');
+//     } catch(e) {
+//         console.log("Error: ", e);
+//     }
+// })
 
 /*---------------post--------------- */
 app.use(bodyParser.json()) // para analizar el cuerpo de la solicitud en formato JSON, a partir de npm install body-parser
-
-// app.post('/', (req, res) => {
-//     console.log('how r u');
-//     res.send("Hola")
-// })
 
 app.post('/register', (req, res) => {
     console.log(req.body);
@@ -50,6 +44,7 @@ app.post('/favorite', (req, res) => {
 
 app.post('/qualify-report', (req, res) => {
     const { vote } = req.body;
+    console.log(vote);
 })
 
 app.post('/qualify-zone', (req, res) => {
