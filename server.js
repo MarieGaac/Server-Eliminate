@@ -3,11 +3,11 @@ const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcryptjs');
 const app = express();
-const url = 'mongodb://127.0.0.1:27017/';
+const url = 'mongodb+srv://MarieGaac:NWizrvZUf1ZOXfh0@cluster0.d4ixu8k.mongodb.net/?retryWrites=true&w=majority';
 const ObjectId = require('mongodb').ObjectId;
 const fs = require('fs');
 
-const client = new MongoClient(url, { useUnifiedTopology: true });
+const client = new MongoClient(url);
 
 async function connectToDB() {
 	try {
