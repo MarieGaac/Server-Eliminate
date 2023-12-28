@@ -3,9 +3,14 @@ const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcryptjs');
 const app = express();
-const url = 'mongodb+srv://MarieGaac:NWizrvZUf1ZOXfh0@cluster0.d4ixu8k.mongodb.net/?retryWrites=true&w=majority';
+// const url = 'mongodb+srv://MarieGaac:NWizrvZUf1ZOXfh0@cluster0.d4ixu8k.mongodb.net/?retryWrites=true&w=majority';
+const url = 'mongodb://127.0.0.1:27017/';
 const ObjectId = require('mongodb').ObjectId;
 const fs = require('fs');
+
+// const client = new MongoClient(url, { useUnifiedTopology: true });
+
+//mongodb+srv://MarieGaac:<password>@cluster0.d4ixu8k.mongodb.net/?retryWrites=true&w=majority
 
 const client = new MongoClient(url);
 
@@ -46,16 +51,28 @@ app.post('/register-user', async (req, res) => {
 })
 
 app.post('/login', async (req, res) => {
-	console.log(req.body);
 	const { username, password } = req.body;
 
 	const result = await database.collection(user_collection).findOne({ username: username })
+	console.log(result);
 
-	const hashedPassword = result.password;
+	if (result != null) {
+		const hashedPassword = result.password;
 
-	const unhashedPassword = bcrypt.compareSync(password, hashedPassword);
-	if (unhashedPassword) {
-		res.send(result);
+		const unhashedPassword = bcrypt.compareSync(password, hashedPassword);
+
+		if (unhashedPassword) {
+			if (username == 'Administrador') {
+				res.send('admin');
+				console.log('admin');
+			} else {
+				res.send(result);
+			}
+		} else {
+			res.send("null");
+		}
+	} else {
+		res.send("null");
 	}
 })
 
@@ -174,7 +191,7 @@ app.post('/score-risk-zone', async (req, res) => {
 
 app.post('/vote_report', async (req, res) => {
 	console.log(req.body);
-	const { showID, vote } = req.body;
+	const { showID, vote, _idUser } = req.body;
 	const idAux = new ObjectId(showID);
 
 	const result1 = await database.collection('report').findOne({ _id: idAux });
@@ -190,7 +207,10 @@ app.post('/vote_report', async (req, res) => {
 
 	console.log(new_votes);
 	const result2 = await database.collection('report').updateOne({ _id: idAux }, { $set: { votes: new_votes } }, {})
-	console.log(result2)
+	const result3 = await database.collection('report').updateOne({ _id: idAux }, { $push: { "users": _idUser } })
+
+	console.log(result3);
+	console.log(result2);
 	res.send(result2)
 })
 
@@ -205,9 +225,12 @@ app.post('/register-report-incident', async (req, res) => {
 
 app.post('/show-report-incident', async (req, res) => {
 	console.log(req.body);
-	const result = await database.collection('report').find();
+	const { _idUser } = req.body;
+	const result = await database.collection('report').find({ "users": { $nin: [_idUser] } });
 
 	const r = await result.toArray();
+	console.log("hiiii");
+	console.log(r.data);
 	res.send(r);
 })
 
@@ -420,19 +443,20 @@ app.post('/remove-favorite', async (req, res) => {
 var path = require("path");
 const http = require("http");
 
-app.post('/store-hashedID', async(req, res) => {
+app.post('/store-hashedID', async (req, res) => {
 	const { _idUser /*, hashedID*/ } = req.body;
 
-	const response = await database.collection('location').insertOne({ _idUser: _idUser, latitude: 0, longitude: 0, /*hashedID: hashedID*/ }/*, { $set: { hashedID: hashedID } }*/);
-	res.send(response);
+	const response1 = await database.collection('location').deleteMany({ _idUser: _idUser });
+
+	const response2 = await database.collection('location').insertOne({ _idUser: _idUser, latitude: 0, longitude: 0 }/*, { $set: { hashedID: hashedID } }*/);
 })
 
-app.post('/store-location-user', async(req, res) => {
+app.post('/store-location-user', async (req, res) => {
 	console.log(req.body);
-	
-	const {_idUser, latitude, longitude} = req.body;
-	
-	const response = await database.collection('location').updateOne({ _idUser: _idUser}, { $set: {latitude: latitude, longitude: longitude }});
+
+	const { _idUser, latitude, longitude } = req.body;
+
+	const response = await database.collection('location').updateOne({ _idUser: _idUser }, { $set: { latitude: latitude, longitude: longitude } });
 	console.log(response);
 	res.sendStatus(200);
 })
@@ -443,12 +467,10 @@ app.get('/show-location-user/:id', async (req, res) => {
 	// console.log(req.query.latitude)
 	// const latitude = req.query.latitude;
 	// const longitude = req.query.longitude;
-	
+
 	const id = req.params.id;
-	
+
 	// console.log(req.params); :id&:dd
-	
-	console.log(typeof id)
 	const idAux = id.toString();
 
 	const result = await database.collection('location').findOne({ _idUser: idAux });
@@ -460,26 +482,26 @@ app.get('/show-location-user/:id', async (req, res) => {
 	const longitude = result.longitude;
 
 	// const {latitude, longitude} = req.body;
-	
+
 	const name_user = 'Lu';
-	
+
 
 	const template = `
 	<!DOCTYPE html>
 	<html lang="en">
 	<head>
-	<title>Ubicación de `+name_user+`</title>
+	<title>Ubicación de `+ name_user + `</title>
 	</head>
 	<body>
 	<div id="googleMap" style="width:100%;height:600px;"></div>
 	<script>
 	function myMap() {
 		var mapProp = {
-			center: new google.maps.LatLng(`+latitude+`, `+longitude+`),
+			center: new google.maps.LatLng(`+ latitude + `, ` + longitude + `),
 			zoom: 20,
 		};
 		var marker = new google.maps.Marker({
-			position: { lat: `+latitude+`, lng: `+longitude+` },
+			position: { lat: `+ latitude + `, lng: ` + longitude + ` },
 		});
 
 
@@ -499,3 +521,4 @@ app.get('/show-location-user/:id', async (req, res) => {
 app.listen(3001, () => {
 	console.log('Servidor corriendo en el puerto 3001');
 })
+
