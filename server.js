@@ -35,18 +35,15 @@ const user_collection = 'user';
 const report_collection = 'report';
 
 app.post('/register-user', async (req, res) => {
-	console.log(req.body);
 	const { name_user, lname_user, birthday, birth_month, birth_year, phone_n, username, password } = req.body;
 
 	const salt = bcrypt.genSaltSync(10);
 	const hashedPassword = bcrypt.hashSync(password, salt);
 
-	console.log(hashedPassword);
 
 	const result = await database.collection(user_collection).insertOne({ name_user: name_user, lname_user: lname_user, birthday: birthday, birth_month: birth_month, birth_year: birth_year, phone_n: phone_n, username: username, password: hashedPassword })
 	//const result2 = await database.collection('location').insertOne({_idUser: result.insertedId, latitude: 0, longitude: 0 });
 
-	console.log(result.insertedId);
 	res.send(result.insertedId);
 })
 
@@ -54,7 +51,6 @@ app.post('/login', async (req, res) => {
 	const { username, password } = req.body;
 
 	const result = await database.collection(user_collection).findOne({ username: username })
-	console.log(result);
 
 	if (result != null) {
 		const hashedPassword = result.password;
@@ -64,7 +60,6 @@ app.post('/login', async (req, res) => {
 		if (unhashedPassword) {
 			if (username == 'Administrador') {
 				res.send('admin');
-				console.log('admin');
 			} else {
 				res.send(result);
 			}
@@ -77,13 +72,10 @@ app.post('/login', async (req, res) => {
 })
 
 app.post('/consult-username', async (req, res) => {
-	console.log(req.body);
-
 	const { username } = req.body;
 
 	const result = await database.collection('user').findOne({ username: username });
 
-	console.log(result);
 	if (result == null) {
 		res.send('1');
 	} else {
@@ -92,9 +84,7 @@ app.post('/consult-username', async (req, res) => {
 })
 
 app.post('/show-user-info', async (req, res) => {
-	console.log(req.body);
 	const { _idUser } = req.body;
-	console.log(_idUser);
 	const idAux = new ObjectId(_idUser)
 
 	const result = await database.collection(user_collection).findOne({ _id: idAux });
@@ -113,7 +103,6 @@ app.post('/delete-user', async (req, res) => {
 		const result2 = database.collection(user_collection).deleteOne({ _id: _id, password: password_delete })
 		if (result2 != null) {
 			res.send(true)
-			console.log(result2)
 		}
 	}
 
@@ -122,7 +111,6 @@ app.post('/delete-user', async (req, res) => {
 const emergency_contact_collection = 'emergency_contact';
 
 app.post('/register-emergency-contact', async (req, res) => {
-	console.log(req.body);
 	const { _idUser, name_ec, phone_n_ec } = req.body;
 
 	const result = await database.collection(emergency_contact_collection).insertOne({ _idUser: _idUser, name_ec: name_ec, phone_n_ec: phone_n_ec })
@@ -131,18 +119,15 @@ app.post('/register-emergency-contact', async (req, res) => {
 })
 
 app.post('/show-contact-emergency', async (req, res) => {
-	console.log(req.body);
 	const { _idUser } = req.body;
 	const result = await database.collection(emergency_contact_collection).find({ _idUser: _idUser });
 
 	const results = await result.toArray();
 
-	console.log(results);
 	res.send(results);
 })
 
 app.post('/show-contact-info', async (req, res) => {
-	console.log(req.body);
 	const { idAux } = req.body;
 	const _id = new ObjectId(idAux);
 	const result = await database.collection(emergency_contact_collection).findOne({ _id: _id });
@@ -151,20 +136,16 @@ app.post('/show-contact-info', async (req, res) => {
 })
 
 app.post('/edit-contact-emergency', async (req, res) => {
-	console.log(req.body);
 	const { idAux, type_data } = req.body;
 	const _id = new ObjectId(idAux)
-	console.log(type_data);
 	var result;
 	if (type_data == 1) {
 		const { name_ec_e } = req.body;
 		result = await database.collection('emergency_contact').updateOne({ _id: _id }, { $set: { name_ec: name_ec_e } }, {})
-		console.log(result);
 
 	} else if (type_data == 2) {
 		const { phone_n_ec_e } = req.body;
 		result = await database.collection('emergency_contact').updateOne({ _id: _id }, { $set: { phone_n_ec: phone_n_ec_e } }, {})
-		console.log(result);
 
 	} else {
 		result = null
@@ -181,7 +162,6 @@ app.post('/delete-contact-emergency', async (req, res) => {
 })
 
 app.post('/score-risk-zone', async (req, res) => {
-	console.log(req.body);
 	const { postal_code, l1, l2, score } = req.body;
 
 	const result = await database.collection('risk_zone').insertOne({ postal_code: postal_code, latitude: l1, longitude: l2, score: score })
@@ -190,13 +170,10 @@ app.post('/score-risk-zone', async (req, res) => {
 })
 
 app.post('/vote_report', async (req, res) => {
-	console.log(req.body);
 	const { showID, vote, _idUser } = req.body;
 	const idAux = new ObjectId(showID);
 
 	const result1 = await database.collection('report').findOne({ _id: idAux });
-
-	console.log(result1.votes)
 
 	let new_votes = result1.votes;
 
@@ -205,44 +182,41 @@ app.post('/vote_report', async (req, res) => {
 	if (vote == 1) new_votes++;
 	else if (vote == 2) new_votes--;
 
-	console.log(new_votes);
 	const result2 = await database.collection('report').updateOne({ _id: idAux }, { $set: { votes: new_votes } }, {})
 	const result3 = await database.collection('report').updateOne({ _id: idAux }, { $push: { "users": _idUser } })
 
-	console.log(result3);
-	console.log(result2);
 	res.send(result2)
 })
 
 app.post('/register-report-incident', async (req, res) => {
-	console.log(req.body);
 	const { _idUser, dateString, latitude, longitude, incident } = req.body;
 	const result = await database.collection('report').insertOne({ _idUser: _idUser, date_report: dateString, incident_type: incident, coordinates_report: { latitude, longitude } })
 
-	console.log(result)
 	res.send(result)
 })
 
 app.post('/show-report-incident', async (req, res) => {
-	console.log(req.body);
 	const { _idUser } = req.body;
 	const result = await database.collection('report').find({ "users": { $nin: [_idUser] } });
 
 	const r = await result.toArray();
-	console.log("hiiii");
-	console.log(r.data);
+	res.send(r);
+})
+
+app.post('/show-report-incident-admin', async (req, res) => {
+	const result = await database.collection('report').find();
+
+	const r = await result.toArray();
 	res.send(r);
 })
 
 app.post('/show-report-user', async (req, res) => {
-	console.log(req.body);
 	const { _idUser } = req.body;
 
 	const result = await database.collection('report').find({ _idUser: _idUser })
 
 	const results = await result.toArray();
 
-	console.log(results);
 	res.send(results);
 })
 
@@ -275,7 +249,6 @@ app.get('/show-risk-zones', async (req, res) => {
 				}
 			}
 
-			// Calcula el promedio de los scores
 			if (scoresByPC[postalCode].scores.length > 0) {
 				const sum = scoresByPC[postalCode].scores.reduce((a, b) => a + b, 0);
 				scoresByPC[postalCode].average = sum / scoresByPC[postalCode].scores.length;
@@ -294,18 +267,6 @@ app.get('/show-risk-zones', async (req, res) => {
 	}
 	getScoresByPostalCodes(results, classifiedPC);
 
-
-	// for (let i = 0; i < results.length - 1; i++) {
-	// 	const currentObject = results[i];
-	// 	const nextObject = results[i + 1];
-
-	// 	if (currentObject.postal_code === nextObject.postal_code) {
-	// 		nextObject.score = r[currentObject.postal_code].average;
-	// 	}
-	// }
-
-
-
 	res.send(results);
 })
 
@@ -313,7 +274,7 @@ app.post('/obtain-info-risk-zone', async (req, res) => {
 	const { postal_code } = req.body;
 	const result = await database.collection('risk_zone').find({ postal_code: postal_code });
 	const results = await result.toArray();
-	console.log(results)
+
 	function getAverage(objects) {
 		scores = [];
 		for (const object of objects) {
@@ -329,56 +290,45 @@ app.post('/obtain-info-risk-zone', async (req, res) => {
 })
 
 app.post('/evaluate-report', async (req, res) => {
-	console.log(req.body);
 	const { idReport, valueStatusPicker } = req.body;
-	console.log(typeof idReport);
 	const idAux = new ObjectId(idReport)
-	console.log(typeof idAux)
 
 	const result = await database.collection('report').updateOne({ _id: idAux }, { $set: { status: valueStatusPicker } }, {})
 	if (valueStatusPicker == 'Approved') {
 		const find_coordinates = await database.collection('report').findOne({ _id: idAux })
 		const result2 = await database.collection('risk_zone').insertOne({ postal_code: postal_code, latitude: find_coordinates.latitude, longitude: find_coordinates.longitude, score: 5 })
 	}
-	console.log(result)
 	res.send(result);
 })
 
 app.post('/edit_profile', async (req, res) => {
-	console.log(req.body);
 	const { _idUser, type_data } = req.body;
 	const idAux = new ObjectId(_idUser)
-	console.log(type_data);
 	var result;
+
 	if (type_data == 1) {
 		const { name_user_e } = req.body;
 		result = await database.collection('user').updateOne({ _id: idAux }, { $set: { name_user: name_user_e.trim() } }, {})
-		console.log(result);
 
 	} else if (type_data == 2) {
 		const { lname_user_e } = req.body;
 		result = await database.collection('user').updateOne({ _id: idAux }, { $set: { lname_user: lname_user_e } }, {})
-		console.log(result);
 
 	} else if (type_data == 3) {
 		const { birthday_e, birth_month_e, birth_year_e } = req.body;
 		result = await database.collection('user').updateOne({ _id: idAux }, { $set: { birthday: birthday_e, birth_month: birth_month_e, birth_year: birth_year_e } }, {})
-		console.log(result);
 
 	} else if (type_data == 4) {
 		const { phone_n_e } = req.body;
 		result = await database.collection('user').updateOne({ _id: idAux }, { $set: { phone_n: phone_n_e } }, {})
-		console.log(result);
 
 	} else if (type_data == 5) {
 		const { username_e } = req.body;
 		result = await database.collection('user').updateOne({ _id: idAux }, { $set: { username: username_e } }, {})
-		console.log(result);
 
 	} else if (type_data == 6) {
 		const { password_e } = req.body;
 		result = await database.collection('user').updateOne({ _id: idAux }, { $set: { password: password_e } }, {})
-		console.log(result);
 	} else {
 		result = null
 	}
@@ -386,44 +336,36 @@ app.post('/edit_profile', async (req, res) => {
 })
 
 app.post('/register-favorite', async (req, res) => {
-	console.log(req.body);
 	const { _idUser, latitude, longitude } = req.body;
 	const result = await database.collection('favorites').insertOne({ _idUser: _idUser, latitude: latitude, longitude: longitude })
-	console.log(result);
 	res.send(result)
 })
 
 app.post('/show-favorites', async (req, res) => {
 	const { _idUser } = req.body;
-	console.log(_idUser);
 
 	const result = await database.collection('favorites').find({ _idUser: _idUser });
 
 	const results = await result.toArray();
 
-	console.log(results);
 	res.send(results);
 })
 
 app.post('/show-no-favorites', async (req, res) => {
 	const { _idUser } = req.body;
-	console.log(_idUser);
 
 	const result = await database.collection('nofavorites').find({ _idUser: _idUser });
 
 	const results = await result.toArray();
 
-	console.log(results);
 	res.send(results);
 })
 
 app.post('/register-no-favorite', async (req, res) => {
-	console.log(req.body);
 	const { _idUser, latitude, longitude, postal_code } = req.body;
 	const result = await database.collection('nofavorites').insertOne({ _idUser: _idUser, latitude: latitude, longitude: longitude })
 	const result2 = await database.collection('risk_zone').insertOne({ postal_code: postal_code, latitude: latitude, longitude: longitude, score: 5 })
-	console.log(result);
-	console.log(result2);
+	
 	res.send(result)
 })
 app.post('/remove-no-favorite', async (req, res) => {
@@ -452,36 +394,22 @@ app.post('/store-hashedID', async (req, res) => {
 })
 
 app.post('/store-location-user', async (req, res) => {
-	console.log(req.body);
-
 	const { _idUser, latitude, longitude } = req.body;
 
 	const response = await database.collection('location').updateOne({ _idUser: _idUser }, { $set: { latitude: latitude, longitude: longitude } });
-	console.log(response);
 	res.sendStatus(200);
 })
 
 app.get('/show-location-user/:id', async (req, res) => {
-	// const latitude = 19.4083017126017;
-	// const longitude = -99.16055348942105;
-	// console.log(req.query.latitude)
-	// const latitude = req.query.latitude;
-	// const longitude = req.query.longitude;
-
 	const id = req.params.id;
 
-	// console.log(req.params); :id&:dd
 	const idAux = id.toString();
 
 	const result = await database.collection('location').findOne({ _idUser: idAux });
 
-	console.log(result);
-
 	const latitude = result.latitude;
-	console.log(latitude)
 	const longitude = result.longitude;
 
-	// const {latitude, longitude} = req.body;
 
 	const name_user = 'Lu';
 
@@ -521,4 +449,3 @@ app.get('/show-location-user/:id', async (req, res) => {
 app.listen(3001, () => {
 	console.log('Servidor corriendo en el puerto 3001');
 })
-
