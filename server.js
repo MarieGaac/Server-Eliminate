@@ -3,8 +3,8 @@ const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcryptjs');
 const app = express();
-const url = 'mongodb+srv://MarieGaac:NWizrvZUf1ZOXfh0@cluster0.d4ixu8k.mongodb.net/?retryWrites=true&w=majority';
-//const url = 'mongodb://127.0.0.1:27017/';
+//const url = 'mongodb+srv://MarieGaac:NWizrvZUf1ZOXfh0@cluster0.d4ixu8k.mongodb.net/?retryWrites=true&w=majority';
+const url = 'mongodb://127.0.0.1:27017/';
 const ObjectId = require('mongodb').ObjectId;
 const axios = require('axios');
 
