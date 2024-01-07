@@ -6,7 +6,7 @@ const app = express();
 const url = 'mongodb+srv://MarieGaac:NWizrvZUf1ZOXfh0@cluster0.d4ixu8k.mongodb.net/?retryWrites=true&w=majority';
 //const url = 'mongodb://127.0.0.1:27017/';
 const ObjectId = require('mongodb').ObjectId;
-const fs = require('fs');
+const axios = require('axios');
 
 // const client = new MongoClient(url, { useUnifiedTopology: true });
 
@@ -293,12 +293,21 @@ app.post('/evaluate-report', async (req, res) => {
 	const { idReport, valueStatusPicker } = req.body;
 	const idAux = new ObjectId(idReport)
 
-	const result = await database.collection('report').updateOne({ _id: idAux }, { $set: { status: valueStatusPicker } }, {})
+	//
 	if (valueStatusPicker == 'Approved') {
 		const find_coordinates = await database.collection('report').findOne({ _id: idAux })
+		const response1 = await axios.post('https://maps.googleapis.com/maps/api/geocode/json?latlng=' + find_coordinates.coordinates_report.latitude + ',' + find_coordinates.coordinates_report.longitude + '&key=AIzaSyCcTM2gurKnK-njixcdKp2WK8SmlxS6-PI')
+		const address = response1.data.results[0].formatted_address;
+		const pos = address.match(/07/);
+		const postal_code = address.substring(pos.index, pos.index + 5);
+		console.log(postal_code)
 		const result2 = await database.collection('risk_zone').insertOne({ postal_code: postal_code, latitude: find_coordinates.latitude, longitude: find_coordinates.longitude, score: 5 })
+		console.log(result2);
 	}
+	// res.send(result);
+	const result = await database.collection('report').updateOne({ _id: idAux }, { $set: { status: valueStatusPicker } }, {})
 	res.send(result);
+	console.log(result)
 })
 
 app.post('/edit_profile', async (req, res) => {
@@ -365,21 +374,25 @@ app.post('/register-no-favorite', async (req, res) => {
 	const { _idUser, latitude, longitude, postal_code } = req.body;
 	const result = await database.collection('nofavorites').insertOne({ _idUser: _idUser, latitude: latitude, longitude: longitude })
 	const result2 = await database.collection('risk_zone').insertOne({ postal_code: postal_code, latitude: latitude, longitude: longitude, score: 5 })
-	
+
 	res.send(result)
 })
 app.post('/remove-no-favorite', async (req, res) => {
 	const { id } = req.body;
 	const _id = new ObjectId(id);
 
-	const response = await database.collection('nofavorites').deleteOne({ _id: _id })
+	const response = await database.collection('nofavorites').deleteOne({ _id: _id });
+	
+	res.send(response);
 })
 
 app.post('/remove-favorite', async (req, res) => {
 	const { id } = req.body;
 	const _id = new ObjectId(id);
 
-	const response = await database.collection('favorites').deleteOne({ _id: _id })
+	const response = await database.collection('favorites').deleteOne({ _id: _id });
+
+	res.send(response);
 })
 
 var path = require("path");
